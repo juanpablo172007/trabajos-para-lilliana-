@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>🧠 Registro Inteligente de Personas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6">
+
+  <!-- Encabezado -->
+  <header class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-4xl font-bold text-blue-400">🧾 Sistema de Registro</h1>
+      <p class="text-gray-300 text-lg">Administra nombres y edades con voz, edición y exportación.</p>
+    </div>
+    <button onclick="iniciarRegistroPorVoz()" class="bg-purple-700 hover:bg-purple-800 px-4 py-2 rounded text-white">🎤 Usar Voz</button>
+  </header>
+
+  <!-- Formulario -->
+  <div class="max-w-3xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+      <input id="nombre" type="text" placeholder="👤 Nombre" class="bg-gray-800 text-white p-2 rounded w-full" />
+      <input id="edad" type="number" placeholder="🎂 Edad" class="bg-gray-800 text-white p-2 rounded w-full" />
+      <button onclick="guardarDato()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded w-full">💾 Guardar</button>
+    </div>
+
+    <!-- Botones Exportar -->
+    <div class="flex justify-end gap-4 mb-4">
+      <button onclick="exportarExcel()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">📤 Exportar</button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse border border-gray-700">
+        <thead>
+          <tr class="bg-gray-800 text-white">
+            <th class="p-2 border border-gray-600">Nombre</th>
+            <th class="p-2 border border-gray-600">Edad</th>
+            <th class="p-2 border border-gray-600">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla"></tbody>
+      </table>
+    </div>
+
+    <!-- Descarga manual -->
+    <div class="mt-4 text-center" id="zona-descarga"></div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    let datos = JSON.parse(localStorage.getItem('personas')) || [];
+
+    function guardarDato() {
+      const nombre = document.getElementById('nombre').value.trim();
+      const edad = document.getElementById('edad').value.trim();
+
+      if (!nombre || !edad) {
+        Swal.fire('❗Campos requeridos', 'Debes completar ambos campos', 'warning');
+        return;
+      }
+
+      datos.push({ nombre, edad });
+      localStorage.setItem('personas', JSON.stringify(datos));
+      document.getElementById('nombre').value = '';
+      document.getElementById('edad').value = '';
+      renderTabla();
+
+      Swal.fire('✅ Guardado', 'Registro agregado correctamente', 'success');
+    }
+
+    function editarFila(index) {
+      datos[index].editando = true;
+      renderTabla();
+    }
+
+    function guardarEdicion(index) {
+      const nuevoNombre = document.getElementById(`edit-nombre-${index}`).value.trim();
+      const nuevaEdad = document.getElementById(`edit-edad-${index}`).value.trim();
+
+      if (!nuevoNombre || !nuevaEdad) {
+        Swal.fire('❗Campos requeridos', 'Debes completar ambos campos', 'warning');
+        return;
+      }
+
+      datos[index] = { nombre: nuevoNombre, edad: nuevaEdad };
+      localStorage.setItem('personas', JSON.stringify(datos));
+      renderTabla();
+
+      Swal.fire('✏️ Editado', 'El registro ha sido actualizado', 'success');
+    }
+
+    function cancelarEdicion(index) {
+      delete datos[index].editando;
+      renderTabla();
+    }
+
+    function eliminarFila(index) {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Esta acción no se puede revertir",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e3342f',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          datos.splice(index, 1);
+          localStorage.setItem('personas', JSON.stringify(datos));
+          renderTabla();
+          Swal.fire('🗑️ Eliminado', 'El registro ha sido eliminado', 'success');
+        }
+      });
+    }
+
+    function exportarExcel() {
+      if (datos.length === 0) {
+        Swal.fire('📂 Sin datos', 'No hay registros para exportar', 'info');
+        return;
+      }
+
+      const hoja = XLSX.utils.json_to_sheet(datos);
+      const libro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(libro, hoja, "Personas");
+
+      const binario = XLSX.write(libro, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([binario], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = "personas.xlsx";
+      enlace.click();
+
+      Swal.fire('✅ Exportado', 'Tu archivo Excel ha sido generado', 'success');
+    }
+
+    function renderTabla() {
+      const tbody = document.getElementById('tabla');
+      tbody.innerHTML = '';
+
+      datos.forEach((dato, index) => {
+        const fila = document.createElement('tr');
+
+        if (dato.editando) {
+          fila.innerHTML = `
+            <td class="p-2 border border-gray-600"><input id="edit-nombre-${index}" value="${dato.nombre}" class="bg-gray-700 text-white p-1 rounded w-full" /></td>
+            <td class="p-2 border border-gray-600"><input id="edit-edad-${index}" value="${dato.edad}" class="bg-gray-700 text-white p-1 rounded w-full" /></td>
+            <td class="p-2 border border-gray-600 space-x-1">
+              <button onclick="guardarEdicion(${index})" class="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700">💾</button>
+              <button onclick="cancelarEdicion(${index})" class="bg-gray-600 px-3 py-1 rounded hover:bg-gray-700">❌</button>
+            </td>`;
+        } else {
+          fila.innerHTML = `
+            <td class="p-2 border border-gray-600">${dato.nombre}</td>
+            <td class="p-2 border border-gray-600">${dato.edad}</td>
+            <td class="p-2 border border-gray-600 space-x-1">
+              <button onclick="editarFila(${index})" class="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600">✏️</button>
+              <button onclick="eliminarFila(${index})" class="bg-red-600 px-3 py-1 rounded hover:bg-red-700">🗑️</button>
+            </td>`;
+        }
+
+        tbody.appendChild(fila);
+      });
+    }
+
+    function hablar(texto) {
+      const utter = new SpeechSynthesisUtterance(texto);
+      utter.lang = "es-ES";
+      speechSynthesis.speak(utter);
+    }
+
+    function escuchar(callback) {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "es-ES";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+      recognition.onresult = (event) => {
+        const resultado = event.results[0][0].transcript;
+        callback(resultado);
+      };
+      recognition.onerror = (event) => {
+        hablar("Hubo un error al escuchar. Intenta de nuevo.");
+      };
+    }
+
+    function iniciarRegistroPorVoz() {
+      hablar("¿Cuál es tu nombre?");
+      setTimeout(() => {
+        escuchar((nombre) => {
+          document.getElementById("nombre").value = nombre;
+          hablar(`Hola ${nombre}, ahora dime tu edad`);
+          setTimeout(() => {
+            escuchar((edadTexto) => {
+              const edad = edadTexto.match(/\d+/);
+              if (edad) {
+                document.getElementById("edad").value = edad[0];
+                guardarDato();
+              } else {
+                hablar("No entendí tu edad. Intenta de nuevo.");
+              }
+            });
+          }, 2500);
+        });
+      }, 2500);
+    }
+
+    renderTabla(); // Inicializar tabla al cargar
+  </script>
+</body>
+</html>
