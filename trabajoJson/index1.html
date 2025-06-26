@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="src/output.css">
+    <title>Lista de Usuarios con Voz 🔊</title>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header con controles de audio -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-indigo-700 mb-2">
+                🎤 Lista de Usuarios con Voz 🔊
+            </h1>
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="btn-audio" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2">
+                    <span>🔊 Activar Voz</span>
+                </button>
+                <button id="btn-stop" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center gap-2">
+                    <span>⏹ Detener</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tarjeta de la tabla -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-indigo-600 text-white">
+                        <tr>
+                            <th class="px-6 py-4 text-left font-semibold">ID 🆔</th>
+                            <th class="px-6 py-4 text-left font-semibold">Nombre 👤</th>
+                            <th class="px-6 py-4 text-left font-semibold">Correo ✉️</th>
+                            <th class="px-6 py-4 text-left font-semibold">Acción 🎧</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body" class="divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                ⏳ Cargando datos...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Audio para efectos -->
+        <audio id="sound-effect" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3"></audio>
+    </div>
+
+    <script src="script1.js"></script>
+</body>
+</html>
